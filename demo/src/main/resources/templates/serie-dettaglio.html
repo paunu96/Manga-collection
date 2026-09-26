@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${mangaSeries.title}">Serie</title>
+    <style>
+        body { font-family: sans-serif; margin: 2rem; max-width: 700px; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+        th, td { border: 1px solid #ccc; padding: 0.5rem 0.8rem; text-align: left; }
+        th { background: #f2f2f2; }
+        form.inline { display: inline; }
+        .riga-form input { padding: 0.3rem; margin-right: 0.5rem; }
+        button.elimina { background: none; border: none; color: #b00020; cursor: pointer; }
+        a { display: inline-block; margin-top: 1.5rem; }
+        .avviso-mancanti {
+            background: #fff3cd; border: 1px solid #ffe69c; color: #664d03;
+            padding: 0.8rem 1rem; border-radius: 4px; margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+<h1 th:text="${mangaSeries.title}">Titolo serie</h1>
+<p>
+    <strong>Autore:</strong> <span th:text="${mangaSeries.author}"></span><br>
+    <strong>Editore IT:</strong> <span th:text="${mangaSeries.publisherIt}"></span><br>
+    <strong>Stato IT:</strong> <span th:text="${mangaSeries.statusIt}"></span> —
+    <strong>ultimo volume IT:</strong> <span th:text="${mangaSeries.latestVolumeIt}"></span><br>
+    <strong>Stato JP:</strong> <span th:text="${mangaSeries.statusJp}"></span> —
+    <strong>ultimo volume JP:</strong> <span th:text="${mangaSeries.latestVolumeJp}"></span>
+</p>
+
+<form th:action="@{/serie/{id}/elimina(id=${mangaSeries.id})}" method="post"
+      onsubmit="return confirm('Eliminare questa serie e tutti i volumi collegati?');">
+    <button type="submit">Elimina serie</button>
+</form>
+
+<div class="avviso-mancanti" th:if="${not #lists.isEmpty(volumiMancanti)}">
+    ⚠️ Ti mancano i volumi:
+    <span th:each="n, iter : ${volumiMancanti}">
+        <span th:text="${n}"></span><span th:if="${!iter.last}">, </span>
+    </span>
+</div>
+
+<h2>Volumi posseduti</h2>
+<table>
+    <thead>
+    <tr>
+        <th>Vol.</th>
+        <th>Prezzo pagato</th>
+        <th>Prezzo copertina</th>
+        <th>Data acquisto</th>
+        <th>Note</th>
+        <th></th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="v : ${volumi}">
+        <td th:text="${v.volumeNumber}"></td>
+        <td th:text="${v.pricePaid}"></td>
+        <td th:text="${v.coverPrice}"></td>
+        <td th:text="${v.acquiredAt}"></td>
+        <td th:text="${v.notes}"></td>
+        <td>
+            <form class="inline" method="post"
+                  th:action="@{/serie/{sid}/volumi/{vid}/elimina(sid=${mangaSeries.id},vid=${v.id})}">
+                <button type="submit" class="elimina">elimina</button>
+            </form>
+        </td>
+    </tr>
+    </tbody>
+</table>
+<p th:if="${#lists.isEmpty(volumi)}">Non hai ancora registrato nessun volume per questa serie.</p>
+
+<h2>Aggiungi un volume</h2>
+<form th:action="@{/serie/{id}/volumi(id=${mangaSeries.id})}" th:object="${nuovoVolume}" method="post" class="riga-form">
+    <input type="number" th:field="*{volumeNumber}" placeholder="N. volume" required min="1">
+    <input type="number" step="0.01" th:field="*{pricePaid}" placeholder="Prezzo pagato">
+    <input type="number" step="0.01" th:field="*{coverPrice}" placeholder="Prezzo copertina">
+    <input type="date" th:field="*{acquiredAt}">
+    <input type="text" th:field="*{notes}" placeholder="Note">
+    <button type="submit">Aggiungi</button>
+</form>
+
+<a th:href="@{/}">&larr; Torna alla collezione</a>
+</body>
+</html>

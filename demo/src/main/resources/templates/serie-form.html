@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Nuova serie</title>
+    <style>
+        body { font-family: sans-serif; margin: 2rem; max-width: 500px; }
+        label { display: block; margin-top: 1rem; font-weight: bold; }
+        input { width: 100%; padding: 0.4rem; box-sizing: border-box; }
+        button { margin-top: 1.5rem; padding: 0.6rem 1.2rem; }
+        a { display: inline-block; margin-top: 1rem; }
+    </style>
+</head>
+<body>
+<h1>Aggiungi una nuova serie</h1>
+
+<form th:action="@{/serie}" th:object="${mangaSeries}" method="post">
+    <label for="title">Titolo *</label>
+    <input type="text" id="title" th:field="*{title}" required>
+
+    <label for="author">Autore</label>
+    <input type="text" id="author" th:field="*{author}">
+
+    <label for="publisherIt">Editore (IT)</label>
+    <input type="text" id="publisherIt" th:field="*{publisherIt}">
+
+    <label for="statusIt">Stato (IT)</label>
+    <input type="text" id="statusIt" th:field="*{statusIt}" placeholder="es. In corso">
+
+    <label for="latestVolumeIt">Ultimo volume uscito in IT</label>
+    <input type="number" id="latestVolumeIt" th:field="*{latestVolumeIt}" min="0">
+
+    <label for="statusJp">Stato (JP)</label>
+    <input type="text" id="statusJp" th:field="*{statusJp}" placeholder="es. In corso">
+
+    <label for="latestVolumeJp">Ultimo volume uscito in JP</label>
+    <input type="number" id="latestVolumeJp" th:field="*{latestVolumeJp}" min="0">
+
+    <label for="animeclickUrl">URL AnimeClick</label>
+    <input type="text" id="animeclickUrl" th:field="*{animeclickUrl}">
+
+    <label for="anilistId">ID Anilist</label>
+    <input type="number" id="anilistId" th:field="*{anilistId}">
+
+    <button type="submit">Salva</button>
+</form>
+
+<a th:href="@{/}">&larr; Torna alla collezione</a>
+</body>
+</html>

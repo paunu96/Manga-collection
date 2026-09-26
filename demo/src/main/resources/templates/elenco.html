@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>La mia collezione manga</title>
+    <style>
+        body { font-family: sans-serif; margin: 2rem; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ccc; padding: 0.5rem 0.8rem; text-align: left; }
+        th { background: #f2f2f2; }
+        .arretrato { color: #b00020; font-weight: bold; }
+        .ok { color: #2e7d32; }
+        a.bottone {
+            display: inline-block; margin-bottom: 1rem; padding: 0.5rem 1rem;
+            background: #333; color: white; text-decoration: none; border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+<h1>La mia collezione manga</h1>
+<a class="bottone" th:href="@{/serie/nuova}">+ Aggiungi serie</a>
+<form th:action="@{/admin/aggiorna}" method="post" style="display:inline">
+    <button type="submit" class="bottone" style="background:#2e7d32;">🔄 Aggiorna da Anilist/AnimeClick</button>
+</form>
+
+<table>
+    <thead>
+    <tr>
+        <th>Titolo</th>
+        <th>Autore</th>
+        <th>Editore IT</th>
+        <th>Posseduti</th>
+        <th>Vol. IT</th>
+        <th>Vol. JP</th>
+        <th>Arretrato</th>
+        <th>Ultimo controllo</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="s : ${serie}">
+        <td><a th:href="@{/serie/{id}(id=${s.id})}" th:text="${s.title}">Titolo</a></td>
+        <td th:text="${s.author}"></td>
+        <td th:text="${s.publisherIt}"></td>
+        <td><a th:href="@{/serie/{id}(id=${s.id})}" th:text="${conteggioVolumi.get(s.id)}">0</a></td>
+        <td th:text="${s.latestVolumeIt}"></td>
+        <td th:text="${s.latestVolumeJp}"></td>
+        <td>
+            <span th:if="${s.volumiArretrati > 0}" class="arretrato" th:text="${s.volumiArretrati}">0</span>
+            <span th:if="${s.volumiArretrati == 0}" class="ok">In pari</span>
+        </td>
+        <td th:text="${s.lastScrapedAt != null ? #temporals.format(s.lastScrapedAt, 'dd/MM/yyyy HH:mm') : '-'}"></td>
+    </tr>
+    </tbody>
+</table>
+
+<p th:if="${#lists.isEmpty(serie)}">Non hai ancora aggiunto nessuna serie.</p>
+</body>
+</html>
