@@ -30,7 +30,9 @@
         <th>Autore</th>
         <th>Editore IT</th>
         <th>Posseduti</th>
+        <th>Stato IT</th>
         <th>Vol. IT</th>
+        <th>Stato JP</th>
         <th>Vol. JP</th>
         <th>Arretrato</th>
         <th>Ultimo controllo</th>
@@ -42,7 +44,9 @@
         <td th:text="${s.author}"></td>
         <td th:text="${s.publisherIt}"></td>
         <td><a th:href="@{/serie/{id}(id=${s.id})}" th:text="${conteggioVolumi.get(s.id)}">0</a></td>
+        <td th:text="${s.statusIt}"></td>
         <td th:text="${s.latestVolumeIt}"></td>
+        <td th:text="${s.statusJp}"></td>
         <td th:text="${s.latestVolumeJp}"></td>
         <td>
             <span th:if="${s.volumiArretrati > 0}" class="arretrato" th:text="${s.volumiArretrati}">0</span>

@@ -4,6 +4,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -23,24 +25,38 @@ import java.util.regex.Pattern;
 @Service
 public class AnimeClickScraper {
 
+    private static final Logger log = LoggerFactory.getLogger(AnimeClickScraper.class);
+
     private static final Pattern PATTERN_DATA = Pattern.compile("\\d{2}/\\d{2}/\\d{4}");
-    private static final Pattern PATTERN_PREZZO = Pattern.compile("\\d+[,.]\\d{2}\\s*€");
-    private static final Pattern PATTERN_NUMERO_FINALE = Pattern.compile("(\\d+)\\s*$");
     private static final DateTimeFormatter FORMATO_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     public record AnimeClickData(String statoIt, Integer ultimoVolume) {
     }
 
     public AnimeClickData scrape(String schedaUrl) throws IOException {
-        Document doc = Jsoup.connect(schedaUrl)
+        String urlBase = normalizzaUrlScheda(schedaUrl);
+
+        Document doc = Jsoup.connect(urlBase)
                 .userAgent("Mozilla/5.0 (compatible; CollezioneMangaBot/1.0)")
                 .timeout(10_000)
                 .get();
 
         String statoIt = estraiValoreDopoEtichetta(doc, "Stato in Italia");
-        Integer ultimoVolume = calcolaUltimoVolumeUscito(schedaUrl);
+        Integer ultimoVolume = calcolaUltimoVolumeUscito(urlBase);
 
         return new AnimeClickData(statoIt, ultimoVolume);
+    }
+
+    /**
+     * Riporta l'URL alla scheda principale, togliendo un eventuale "/edizioni"
+     * finale nel caso l'utente l'abbia incollato per sbaglio.
+     */
+    private String normalizzaUrlScheda(String schedaUrl) {
+        String url = schedaUrl.replaceAll("/+$", "");
+        if (url.endsWith("/edizioni")) {
+            url = url.substring(0, url.length() - "/edizioni".length());
+        }
+        return url;
     }
 
     /**
@@ -66,24 +82,41 @@ public class AnimeClickScraper {
      * relativa data di uscita) e restituisce il numero di volume più alto
      * tra quelli con data di uscita non futura.
      */
-    private Integer calcolaUltimoVolumeUscito(String schedaUrl) throws IOException {
-        String edizioniUrl = schedaUrl.replaceAll("/+$", "") + "/edizioni";
+    /** Nessun manga reale supera questo numero di volumi: oltre questa soglia, il dato è quasi certamente un errore di lettura. */
+    private static final int VOLUME_MASSIMO_PLAUSIBILE = 500;
+
+    private Integer calcolaUltimoVolumeUscito(String urlBaseScheda) throws IOException {
+        String edizioniUrl = urlBaseScheda + "/edizioni";
         Document doc = Jsoup.connect(edizioniUrl)
                 .userAgent("Mozilla/5.0 (compatible; CollezioneMangaBot/1.0)")
                 .timeout(10_000)
                 .get();
 
+        log.info("AnimeClick edizioni [{}] -> titolo pagina ricevuta: \"{}\", numero tabelle trovate: {}",
+                edizioniUrl, doc.title(), doc.select("table").size());
+
+        Element tabellaEdizioni = trovaTabellaEdizioni(doc);
+        if (tabellaEdizioni == null) {
+            log.warn("Nessuna tabella con 'Titolo'+'Uscita' trovata in {}", edizioniUrl);
+            return null;
+        }
+        log.info("Tabella edizioni trovata, righe: {}", tabellaEdizioni.select("tr").size());
+
+        String titoloBase = estraiTitoloBase(doc);
+        Pattern patternTitoloVolume = costruisciPatternTitoloVolume(titoloBase);
+        log.info("Titolo base rilevato: \"{}\"", titoloBase);
+
         LocalDate oggi = LocalDate.now();
         int massimoVolumeUscito = 0;
 
-        for (Element riga : doc.select("table tr")) {
+        for (Element riga : tabellaEdizioni.select("tr")) {
             Elements celle = riga.select("td");
             if (celle.isEmpty()) {
                 continue;
             }
 
             LocalDate dataUscita = null;
-            String celleTitolo = null;
+            Integer numeroVolume = null;
 
             for (Element cella : celle) {
                 String testo = cella.text().trim();
@@ -99,29 +132,70 @@ public class AnimeClickScraper {
                     }
                     continue;
                 }
-                // Scarta celle che sono prezzi o sequenze di piccoli numeri (voti)
-                if (PATTERN_PREZZO.matcher(testo).find()) {
-                    continue;
-                }
-                if (celleTitolo == null && PATTERN_NUMERO_FINALE.matcher(testo).find()) {
-                    celleTitolo = testo;
+                if (numeroVolume == null && patternTitoloVolume != null) {
+                    Matcher titoloMatcher = patternTitoloVolume.matcher(testo);
+                    if (titoloMatcher.matches()) {
+                        numeroVolume = Integer.parseInt(titoloMatcher.group(1));
+                    }
                 }
             }
 
-            if (dataUscita == null || celleTitolo == null) {
+            if (dataUscita == null || numeroVolume == null) {
                 continue;
             }
             if (dataUscita.isAfter(oggi)) {
                 continue;
             }
-
-            Matcher numeroMatcher = PATTERN_NUMERO_FINALE.matcher(celleTitolo);
-            if (numeroMatcher.find()) {
-                int numero = Integer.parseInt(numeroMatcher.group(1));
-                massimoVolumeUscito = Math.max(massimoVolumeUscito, numero);
+            if (numeroVolume <= VOLUME_MASSIMO_PLAUSIBILE) {
+                massimoVolumeUscito = Math.max(massimoVolumeUscito, numeroVolume);
             }
         }
 
+        log.info("Ultimo volume calcolato per \"{}\": {}", titoloBase, massimoVolumeUscito);
         return massimoVolumeUscito > 0 ? massimoVolumeUscito : null;
+    }
+
+    /**
+     * Ricava il titolo "nudo" della serie dal &lt;title&gt; della pagina, che su
+     * AnimeClick ha il formato "Titolo - edizioni - (Manga)".
+     */
+    private String estraiTitoloBase(Document doc) {
+        String titolo = doc.title();
+        int posizioneTrattino = titolo.indexOf(" - ");
+        if (posizioneTrattino > 0) {
+            titolo = titolo.substring(0, posizioneTrattino);
+        }
+        return titolo.trim();
+    }
+
+    /**
+     * Costruisce un pattern che riconosce SOLO le righe dell'edizione
+     * principale, del tipo "Titolo &lt;numero&gt;" (es. "One Piece 113"),
+     * escludendo ristampe, edizioni speciali, artbook e altri prodotti
+     * collegati che iniziano con lo stesso titolo ma proseguono con altre
+     * parole (es. "One Piece New Edition 14", "One Piece Green").
+     */
+    private Pattern costruisciPatternTitoloVolume(String titoloBase) {
+        if (titoloBase == null || titoloBase.isBlank()) {
+            return null;
+        }
+        return Pattern.compile("^" + Pattern.quote(titoloBase) + "\\s+(\\d+)$", Pattern.CASE_INSENSITIVE);
+    }
+
+    /**
+     * Trova, tra tutte le tabelle della pagina, quella con l'elenco delle
+     * edizioni: la riconosce perché contiene sia "Titolo" che "Uscita"
+     * nell'intestazione. Ignora ogni altra tabella presente nella pagina
+     * (menu, contenuti correlati, ecc.) per evitare di leggere numeri
+     * provenienti da sezioni non pertinenti.
+     */
+    private Element trovaTabellaEdizioni(Document doc) {
+        for (Element tabella : doc.select("table")) {
+            String testo = tabella.text();
+            if (testo.contains("Titolo") && testo.contains("Uscita")) {
+                return tabella;
+            }
+        }
+        return null;
     }
 }
