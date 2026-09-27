@@ -30,10 +30,17 @@ public class AnimeClickScraper {
     private static final Pattern PATTERN_DATA = Pattern.compile("\\d{2}/\\d{2}/\\d{4}");
     private static final DateTimeFormatter FORMATO_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    public record AnimeClickData(String statoIt, Integer ultimoVolume) {
+    /**
+     * @param statoIt        stato di pubblicazione in Italia (es. "in corso")
+     * @param ultimoVolume   ultimo volume dell'edizione principale già uscito in Italia
+     * @param volumiTotaliJp campo generico "Volumi" della scheda: conteggio complessivo
+     *                       dell'opera (spesso allineato al Giappone), usato come stima
+     *                       di riserva quando Anilist non fornisce questo dato
+     */
+    public record AnimeClickData(String statoIt, Integer ultimoVolume, Integer volumiTotaliJp) {
     }
 
-    public AnimeClickData scrape(String schedaUrl) throws IOException {
+    public AnimeClickData scrape(String schedaUrl, String titoloRicercaPersonalizzato) throws IOException {
         String urlBase = normalizzaUrlScheda(schedaUrl);
 
         Document doc = Jsoup.connect(urlBase)
@@ -42,9 +49,14 @@ public class AnimeClickScraper {
                 .get();
 
         String statoIt = estraiValoreDopoEtichetta(doc, "Stato in Italia");
-        Integer ultimoVolume = calcolaUltimoVolumeUscito(urlBase);
+        Integer volumiTotaliJp = estraiNumeroDopoEtichetta(doc, "Volumi");
 
-        return new AnimeClickData(statoIt, ultimoVolume);
+        String titoloDaCercare = (titoloRicercaPersonalizzato != null && !titoloRicercaPersonalizzato.isBlank())
+                ? titoloRicercaPersonalizzato.trim()
+                : estraiTitoloBase(doc);
+        Integer ultimoVolume = calcolaUltimoVolumeUscito(urlBase, titoloDaCercare);
+
+        return new AnimeClickData(statoIt, ultimoVolume, volumiTotaliJp);
     }
 
     /**
@@ -78,14 +90,30 @@ public class AnimeClickScraper {
     }
 
     /**
-     * Apre la pagina "edizioni" della scheda (elenco di ogni volume con la
-     * relativa data di uscita) e restituisce il numero di volume più alto
-     * tra quelli con data di uscita non futura.
+     * Come {@link #estraiValoreDopoEtichetta}, ma interpreta il valore come
+     * numero intero (usato per il campo "Volumi" della scheda principale).
      */
+    private Integer estraiNumeroDopoEtichetta(Document doc, String etichetta) {
+        String valore = estraiValoreDopoEtichetta(doc, etichetta);
+        if (valore == null) {
+            return null;
+        }
+        Matcher matcher = Pattern.compile("\\d+").matcher(valore);
+        if (matcher.find()) {
+            return Integer.parseInt(matcher.group());
+        }
+        return null;
+    }
+
     /** Nessun manga reale supera questo numero di volumi: oltre questa soglia, il dato è quasi certamente un errore di lettura. */
     private static final int VOLUME_MASSIMO_PLAUSIBILE = 500;
 
-    private Integer calcolaUltimoVolumeUscito(String urlBaseScheda) throws IOException {
+    /**
+     * Apre la pagina "edizioni" della scheda (elenco di ogni volume con la
+     * relativa data di uscita) e restituisce il numero di volume più alto
+     * tra quelli con data di uscita non futura, per il titolo indicato.
+     */
+    private Integer calcolaUltimoVolumeUscito(String urlBaseScheda, String titoloDaCercare) throws IOException {
         String edizioniUrl = urlBaseScheda + "/edizioni";
         Document doc = Jsoup.connect(edizioniUrl)
                 .userAgent("Mozilla/5.0 (compatible; CollezioneMangaBot/1.0)")
@@ -102,9 +130,8 @@ public class AnimeClickScraper {
         }
         log.info("Tabella edizioni trovata, righe: {}", tabellaEdizioni.select("tr").size());
 
-        String titoloBase = estraiTitoloBase(doc);
-        Pattern patternTitoloVolume = costruisciPatternTitoloVolume(titoloBase);
-        log.info("Titolo base rilevato: \"{}\"", titoloBase);
+        Pattern patternTitoloVolume = costruisciPatternTitoloVolume(titoloDaCercare);
+        log.info("Titolo usato per la ricerca: \"{}\"", titoloDaCercare);
 
         LocalDate oggi = LocalDate.now();
         int massimoVolumeUscito = 0;
@@ -151,7 +178,7 @@ public class AnimeClickScraper {
             }
         }
 
-        log.info("Ultimo volume calcolato per \"{}\": {}", titoloBase, massimoVolumeUscito);
+        log.info("Ultimo volume calcolato per \"{}\": {}", titoloDaCercare, massimoVolumeUscito);
         return massimoVolumeUscito > 0 ? massimoVolumeUscito : null;
     }
 

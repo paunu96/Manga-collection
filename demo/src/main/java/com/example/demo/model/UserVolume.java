@@ -7,8 +7,8 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "user_volume",
         uniqueConstraints = @UniqueConstraint(
-                name = "unique_series_volume",
-                columnNames = {"series_id", "volume_number"}
+                name = "unique_series_volume_edizione",
+                columnNames = {"series_id", "volume_number", "edizione"}
         ))
 public class UserVolume {
 
@@ -34,6 +34,10 @@ public class UserVolume {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    /** Distingue varianti dello stesso volume (es. "Normale", "Variant cover"). */
+    @Column(length = 100)
+    private String edizione = "Normale";
 
     public UserVolume() {
     }
@@ -94,5 +98,13 @@ public class UserVolume {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public String getEdizione() {
+        return edizione;
+    }
+
+    public void setEdizione(String edizione) {
+        this.edizione = edizione;
     }
 }

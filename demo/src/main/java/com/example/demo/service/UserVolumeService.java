@@ -26,9 +26,23 @@ public class UserVolumeService {
         return repository.countBySeriesId(seriesId);
     }
 
+    /**
+     * Numero dell'ultimo volume posseduto (il più alto), o null se non ne
+     * possiedi ancora nessuno. A differenza del conteggio, questo valore
+     * non viene alterato da un eventuale volume 0 o da varianti duplicate.
+     */
+    public Integer findUltimoVolumeNumero(Long seriesId) {
+        return repository.findFirstBySeriesIdOrderByVolumeNumberDesc(seriesId)
+                .map(UserVolume::getVolumeNumber)
+                .orElse(null);
+    }
+
     public UserVolume addVolume(Long seriesId, UserVolume volume) {
         MangaSeries series = mangaSeriesService.findById(seriesId);
         volume.setSeries(series);
+        if (volume.getEdizione() == null || volume.getEdizione().isBlank()) {
+            volume.setEdizione("Normale");
+        }
         return repository.save(volume);
     }
 

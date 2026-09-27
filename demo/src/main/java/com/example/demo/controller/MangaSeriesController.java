@@ -41,12 +41,21 @@ public class MangaSeriesController {
     @GetMapping("/")
     public String elenco(Model model) {
         List<MangaSeries> serie = mangaSeriesService.findAll();
-        Map<Long, Long> conteggioVolumi = new HashMap<>();
+        Map<Long, Integer> ultimoPossedutoPerSerie = new HashMap<>();
+        Map<Long, Integer> arretratoPerSerie = new HashMap<>();
+
         for (MangaSeries s : serie) {
-            conteggioVolumi.put(s.getId(), userVolumeService.countBySeries(s.getId()));
+            Integer ultimoPosseduto = userVolumeService.findUltimoVolumeNumero(s.getId());
+            ultimoPossedutoPerSerie.put(s.getId(), ultimoPosseduto);
+
+            int posseduto = ultimoPosseduto != null ? ultimoPosseduto : 0;
+            int uscitiIt = s.getLatestVolumeIt() != null ? s.getLatestVolumeIt() : 0;
+            arretratoPerSerie.put(s.getId(), Math.max(0, uscitiIt - posseduto));
         }
+
         model.addAttribute("serie", serie);
-        model.addAttribute("conteggioVolumi", conteggioVolumi);
+        model.addAttribute("ultimoPossedutoPerSerie", ultimoPossedutoPerSerie);
+        model.addAttribute("arretratoPerSerie", arretratoPerSerie);
         return "elenco";
     }
 
@@ -67,25 +76,31 @@ public class MangaSeriesController {
     @GetMapping("/serie/{id}")
     public String dettaglioSerie(@PathVariable Long id, Model model) {
         List<UserVolume> volumi = userVolumeService.findBySeries(id);
-        model.addAttribute("mangaSeries", mangaSeriesService.findById(id));
+        MangaSeries mangaSeries = mangaSeriesService.findById(id);
+        model.addAttribute("mangaSeries", mangaSeries);
         model.addAttribute("volumi", volumi);
-        model.addAttribute("volumiMancanti", calcolaVolumiMancanti(volumi));
+        model.addAttribute("volumiMancanti", calcolaVolumiMancanti(volumi, mangaSeries.getLatestVolumeIt()));
         model.addAttribute("nuovoVolume", new UserVolume());
         return "serie-dettaglio";
     }
 
     /**
-     * Dato l'elenco dei volumi posseduti, calcola i numeri "buchi":
-     * es. se possiedi 1, 2, 4, 5, 8 → mancano 3, 6, 7 (fino all'ultimo posseduto).
+     * Dato l'elenco dei volumi posseduti, calcola i numeri "buchi" fino al
+     * più alto tra: l'ultimo volume posseduto e l'ultimo uscito in Italia.
+     * Così segnala sia i buchi interni (es. possiedi 1,2,4 → manca 3) sia i
+     * volumi già usciti in Italia che non hai ancora comprato.
      */
-    private List<Integer> calcolaVolumiMancanti(List<UserVolume> volumi) {
-        if (volumi.isEmpty()) {
-            return List.of();
-        }
-        int massimo = volumi.stream().mapToInt(UserVolume::getVolumeNumber).max().orElse(0);
+    private List<Integer> calcolaVolumiMancanti(List<UserVolume> volumi, Integer latestVolumeIt) {
         Set<Integer> posseduti = volumi.stream()
                 .map(UserVolume::getVolumeNumber)
                 .collect(Collectors.toSet());
+        int massimoPosseduto = posseduti.stream().mapToInt(Integer::intValue).max().orElse(0);
+        int uscitiIt = latestVolumeIt != null ? latestVolumeIt : 0;
+        int massimo = Math.max(massimoPosseduto, uscitiIt);
+
+        if (massimo == 0) {
+            return List.of();
+        }
         List<Integer> mancanti = new ArrayList<>();
         for (int n = 1; n <= massimo; n++) {
             if (!posseduti.contains(n)) {

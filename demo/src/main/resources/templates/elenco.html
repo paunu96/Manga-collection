@@ -29,7 +29,7 @@
         <th>Titolo</th>
         <th>Autore</th>
         <th>Editore IT</th>
-        <th>Posseduti</th>
+        <th>Ultimo posseduto</th>
         <th>Stato IT</th>
         <th>Vol. IT</th>
         <th>Stato JP</th>
@@ -43,14 +43,17 @@
         <td><a th:href="@{/serie/{id}(id=${s.id})}" th:text="${s.title}">Titolo</a></td>
         <td th:text="${s.author}"></td>
         <td th:text="${s.publisherIt}"></td>
-        <td><a th:href="@{/serie/{id}(id=${s.id})}" th:text="${conteggioVolumi.get(s.id)}">0</a></td>
+        <td>
+            <a th:href="@{/serie/{id}(id=${s.id})}"
+               th:text="${ultimoPossedutoPerSerie.get(s.id) != null ? ultimoPossedutoPerSerie.get(s.id) : 'nessuno'}">0</a>
+        </td>
         <td th:text="${s.statusIt}"></td>
         <td th:text="${s.latestVolumeIt}"></td>
         <td th:text="${s.statusJp}"></td>
         <td th:text="${s.latestVolumeJp}"></td>
         <td>
-            <span th:if="${s.volumiArretrati > 0}" class="arretrato" th:text="${s.volumiArretrati}">0</span>
-            <span th:if="${s.volumiArretrati == 0}" class="ok">In pari</span>
+            <span th:if="${arretratoPerSerie.get(s.id) > 0}" class="arretrato" th:text="${arretratoPerSerie.get(s.id)}">0</span>
+            <span th:if="${arretratoPerSerie.get(s.id) == 0}" class="ok">In pari</span>
         </td>
         <td th:text="${s.lastScrapedAt != null ? #temporals.format(s.lastScrapedAt, 'dd/MM/yyyy HH:mm') : '-'}"></td>
     </tr>

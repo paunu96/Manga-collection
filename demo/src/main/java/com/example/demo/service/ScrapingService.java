@@ -35,6 +35,8 @@ public class ScrapingService {
             String statusJp = serie.getStatusJp();
             Integer latestVolumeJp = serie.getLatestVolumeJp();
 
+            Integer volumiJpDaAnilist = null;
+
             if (serie.getAnilistId() != null) {
                 try {
                     AnilistClient.AnilistData dati = anilistClient.fetch(serie.getAnilistId());
@@ -42,8 +44,9 @@ public class ScrapingService {
                         if (dati.status() != null) {
                             statusJp = mappaStatoAnilist(dati.status());
                         }
-                        if (dati.volumes() != null) {
-                            latestVolumeJp = dati.volumes();
+                        volumiJpDaAnilist = dati.volumes();
+                        if (volumiJpDaAnilist != null) {
+                            latestVolumeJp = volumiJpDaAnilist;
                         }
                     }
                 } catch (Exception e) {
@@ -54,13 +57,19 @@ public class ScrapingService {
 
             if (serie.getAnimeclickUrl() != null && !serie.getAnimeclickUrl().isBlank()) {
                 try {
-                    AnimeClickScraper.AnimeClickData dati = animeClickScraper.scrape(serie.getAnimeclickUrl());
+                    AnimeClickScraper.AnimeClickData dati = animeClickScraper.scrape(
+                            serie.getAnimeclickUrl(), serie.getTitoloRicercaAnimeclick());
                     if (dati != null) {
                         if (dati.statoIt() != null) {
                             statusIt = dati.statoIt();
                         }
                         if (dati.ultimoVolume() != null) {
                             latestVolumeIt = dati.ultimoVolume();
+                        }
+                        // Anilist per le serie ancora in corso spesso non fornisce "volumes":
+                        // in quel caso usiamo il conteggio generico di AnimeClick come stima.
+                        if (volumiJpDaAnilist == null && dati.volumiTotaliJp() != null) {
+                            latestVolumeJp = dati.volumiTotaliJp();
                         }
                     }
                 } catch (Exception e) {

@@ -1,5 +1,7 @@
 package com.example.demo.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -16,6 +18,8 @@ import java.util.Map;
  */
 @Service
 public class AnilistClient {
+
+    private static final Logger log = LoggerFactory.getLogger(AnilistClient.class);
 
     private static final String ENDPOINT = "https://graphql.anilist.co";
 
@@ -59,9 +63,15 @@ public class AnilistClient {
                 .retrieve()
                 .body(GraphQlResponse.class);
 
+        log.info("Anilist risposta per id {} -> risposta null? {}, data null? {}",
+                anilistId, risposta == null, risposta != null && risposta.data() == null);
+
         if (risposta == null || risposta.data() == null) {
             return null;
         }
-        return risposta.data().Media();
+        AnilistData dati = risposta.data().Media();
+        log.info("Anilist dati per id {} -> status={}, volumes={}",
+                anilistId, dati != null ? dati.status() : null, dati != null ? dati.volumes() : null);
+        return dati;
     }
 }

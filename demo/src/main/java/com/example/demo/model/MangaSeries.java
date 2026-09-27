@@ -42,6 +42,14 @@ public class MangaSeries {
     @Column(name = "last_scraped_at")
     private LocalDateTime lastScrapedAt;
 
+    /**
+     * Titolo esatto da cercare nella tabella edizioni di AnimeClick, se
+     * diverso dal titolo della pagina (es. per tracciare una "New Edition"
+     * invece dell'edizione base). Se vuoto, si usa il titolo della pagina.
+     */
+    @Column(name = "animeclick_titolo_ricerca")
+    private String titoloRicercaAnimeclick;
+
     @OneToMany(mappedBy = "series", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserVolume> volumes = new ArrayList<>();
 
@@ -146,14 +154,11 @@ public class MangaSeries {
         this.volumes = volumes;
     }
 
-    /**
-     * Quanti volumi mancano da recuperare rispetto all'ultimo uscito in Giappone.
-     */
-    @Transient
-    public int getVolumiArretrati() {
-        if (latestVolumeJp == null || latestVolumeIt == null) {
-            return 0;
-        }
-        return Math.max(0, latestVolumeJp - latestVolumeIt);
+    public String getTitoloRicercaAnimeclick() {
+        return titoloRicercaAnimeclick;
+    }
+
+    public void setTitoloRicercaAnimeclick(String titoloRicercaAnimeclick) {
+        this.titoloRicercaAnimeclick = titoloRicercaAnimeclick;
     }
 }

@@ -46,6 +46,7 @@
     <thead>
     <tr>
         <th>Vol.</th>
+        <th>Edizione</th>
         <th>Prezzo pagato</th>
         <th>Prezzo copertina</th>
         <th>Data acquisto</th>
@@ -56,6 +57,7 @@
     <tbody>
     <tr th:each="v : ${volumi}">
         <td th:text="${v.volumeNumber}"></td>
+        <td th:text="${v.edizione}"></td>
         <td th:text="${v.pricePaid}"></td>
         <td th:text="${v.coverPrice}"></td>
         <td th:text="${v.acquiredAt}"></td>
@@ -73,7 +75,8 @@
 
 <h2>Aggiungi un volume</h2>
 <form th:action="@{/serie/{id}/volumi(id=${mangaSeries.id})}" th:object="${nuovoVolume}" method="post" class="riga-form">
-    <input type="number" th:field="*{volumeNumber}" placeholder="N. volume" required min="1">
+    <input type="number" th:field="*{volumeNumber}" placeholder="N. volume" required min="0">
+    <input type="text" th:field="*{edizione}" placeholder="Edizione (default: Normale)">
     <input type="number" step="0.01" th:field="*{pricePaid}" placeholder="Prezzo pagato">
     <input type="number" step="0.01" th:field="*{coverPrice}" placeholder="Prezzo copertina">
     <input type="date" th:field="*{acquiredAt}">
