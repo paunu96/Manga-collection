@@ -2,64 +2,133 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>La mia collezione manga</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome per le icone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Inter e Oswald -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; margin: 2rem; }
-        table { border-collapse: collapse; width: 100%; }
-        th, td { border: 1px solid #ccc; padding: 0.5rem 0.8rem; text-align: left; }
-        th { background: #f2f2f2; }
-        .arretrato { color: #b00020; font-weight: bold; }
-        .ok { color: #2e7d32; }
-        a.bottone {
-            display: inline-block; margin-bottom: 1rem; padding: 0.5rem 1rem;
-            background: #333; color: white; text-decoration: none; border-radius: 4px;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .font-display { font-family: 'Oswald', sans-serif; }
     </style>
 </head>
-<body>
-<h1>La mia collezione manga</h1>
-<a class="bottone" th:href="@{/serie/nuova}">+ Aggiungi serie</a>
-<form th:action="@{/admin/aggiorna}" method="post" style="display:inline">
-    <button type="submit" class="bottone" style="background:#2e7d32;">🔄 Aggiorna da Anilist/AnimeClick</button>
-</form>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased">
 
-<table>
-    <thead>
-    <tr>
-        <th>Titolo</th>
-        <th>Autore</th>
-        <th>Editore IT</th>
-        <th>Ultimo posseduto</th>
-        <th>Stato IT</th>
-        <th>Vol. IT</th>
-        <th>Stato JP</th>
-        <th>Vol. JP</th>
-        <th>Arretrato</th>
-        <th>Ultimo controllo</th>
-    </tr>
-    </thead>
-    <tbody>
-    <tr th:each="s : ${serie}">
-        <td><a th:href="@{/serie/{id}(id=${s.id})}" th:text="${s.title}">Titolo</a></td>
-        <td th:text="${s.author}"></td>
-        <td th:text="${s.publisherIt}"></td>
-        <td>
-            <a th:href="@{/serie/{id}(id=${s.id})}"
-               th:text="${ultimoPossedutoPerSerie.get(s.id) != null ? ultimoPossedutoPerSerie.get(s.id) : 'nessuno'}">0</a>
-        </td>
-        <td th:text="${s.statusIt}"></td>
-        <td th:text="${s.latestVolumeIt}"></td>
-        <td th:text="${s.statusJp}"></td>
-        <td th:text="${s.latestVolumeJp}"></td>
-        <td>
-            <span th:if="${arretratoPerSerie.get(s.id) > 0}" class="arretrato" th:text="${arretratoPerSerie.get(s.id)}">0</span>
-            <span th:if="${arretratoPerSerie.get(s.id) == 0}" class="ok">In pari</span>
-        </td>
-        <td th:text="${s.lastScrapedAt != null ? #temporals.format(s.lastScrapedAt, 'dd/MM/yyyy HH:mm') : '-'}"></td>
-    </tr>
-    </tbody>
-</table>
+    <!-- Header Navigation Bar -->
+    <header class="bg-slate-800/80 border-b border-slate-700/60 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-pink-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                    <i class="fa-solid fa-book-open text-white text-lg"></i>
+                </div>
+                <div>
+                    <a th:href="@{/}" class="font-display text-2xl font-bold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-pink-400 to-rose-400">
+                        MANGA<span class="text-white">DEX</span>
+                    </a>
+                    <span class="text-[10px] text-purple-400 uppercase tracking-widest block -mt-1 font-semibold">Collection Manager</span>
+                </div>
+            </div>
 
-<p th:if="${#lists.isEmpty(serie)}">Non hai ancora aggiunto nessuna serie.</p>
+            <div class="flex items-center space-x-3">
+                <a class="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg text-sm font-medium shadow-md hover:shadow-purple-500/25 transition-all flex items-center space-x-2"
+                   th:href="@{/serie/nuova}">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Nuova Serie</span>
+                </a>
+                <form th:action="@{/admin/aggiorna}" method="post" class="inline">
+                    <button type="submit" 
+                            class="px-4 py-2 bg-emerald-600/90 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium border border-emerald-500/30 shadow-md hover:shadow-emerald-500/20 transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-rotate text-xs"></i>
+                        <span>Aggiorna Anilist/AnimeClick</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+        
+        <div class="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h1 class="font-display text-3xl font-bold tracking-wide text-white flex items-center gap-2">
+                    <span>La mia collezione manga</span>
+                    <span class="text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-sans font-normal"
+                          th:text="${#lists.size(serie)} + ' Serie'">0 Serie</span>
+                </h1>
+                <p class="text-slate-400 text-sm mt-1">Gestisci i tuoi volumi posseduti, monitora gli arretrati e controlla le uscite.</p>
+            </div>
+        </div>
+
+        <!-- Tabella Manga -->
+        <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl overflow-hidden shadow-xl backdrop-blur-sm">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-800/90 border-b border-slate-700 text-slate-300 font-display text-sm tracking-wider uppercase">
+                            <th class="py-3.5 px-4 font-semibold">Titolo</th>
+                            <th class="py-3.5 px-4 font-semibold">Autore</th>
+                            <th class="py-3.5 px-4 font-semibold">Editore IT</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">Ultimo Posseduto</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">Stato IT</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">Vol. IT</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">Stato JP</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">Vol. JP</th>
+                            <th class="py-3.5 px-4 font-semibold text-center">Arretrato</th>
+                            <th class="py-3.5 px-4 font-semibold text-right">Ultimo controllo</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/50 text-sm">
+                        <tr th:each="s : ${serie}" class="hover:bg-slate-700/30 transition-colors">
+                            <td class="py-3.5 px-4 font-medium text-purple-300 hover:text-purple-200">
+                                <a th:href="@{/serie/{id}(id=${s.id})}" th:text="${s.title}" class="hover:underline flex items-center space-x-2">
+                                    <i class="fa-solid fa-book text-xs text-purple-400/70"></i>
+                                    <span>Titolo</span>
+                                </a>
+                            </td>
+                            <td class="py-3.5 px-4 text-slate-300" th:text="${s.author != null ? s.author : '-'}">Autore</td>
+                            <td class="py-3.5 px-4 text-slate-400" th:text="${s.publisherIt != null ? s.publisherIt : '-'}">Editore</td>
+                            <td class="py-3.5 px-4 text-center font-bold text-slate-200">
+                                <a th:href="@{/serie/{id}(id=${s.id})}"
+                                   class="inline-block px-2.5 py-1 rounded-md bg-slate-700/50 border border-slate-600/50 hover:border-purple-500/50 hover:text-purple-300 transition-all"
+                                   th:text="${ultimoPossedutoPerSerie.get(s.id) != null ? ultimoPossedutoPerSerie.get(s.id) : 'nessuno'}">0</a>
+                            </td>
+                            <td class="py-3.5 px-4 text-center text-slate-300" th:text="${s.statusIt}">In corso</td>
+                            <td class="py-3.5 px-4 text-center text-slate-400 font-mono" th:text="${s.latestVolumeIt}">0</td>
+                            <td class="py-3.5 px-4 text-center text-slate-400" th:text="${s.statusJp}">In corso</td>
+                            <td class="py-3.5 px-4 text-center text-slate-400 font-mono" th:text="${s.latestVolumeJp}">0</td>
+                            <td class="py-3.5 px-4 text-center">
+                                <span th:if="${arretratoPerSerie.get(s.id) > 0}" 
+                                      class="inline-flex items-center space-x-1 bg-rose-500/10 text-rose-400 border border-rose-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                                    <i class="fa-solid fa-triangle-exclamation text-[10px]"></i>
+                                    <span th:text="${arretratoPerSerie.get(s.id)} + ' mancanti'">0</span>
+                                </span>
+                                <span th:if="${arretratoPerSerie.get(s.id) == 0}" 
+                                      class="inline-flex items-center space-x-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2.5 py-0.5 rounded-full text-xs font-semibold">
+                                    <i class="fa-solid fa-check text-[10px]"></i>
+                                    <span>In pari</span>
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-4 text-right text-xs text-slate-400 font-mono"
+                                th:text="${s.lastScrapedAt != null ? #temporals.format(s.lastScrapedAt, 'dd/MM/yyyy HH:mm') : '-'}">--/--/----</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State -->
+            <div th:if="${#lists.isEmpty(serie)}" class="p-12 text-center text-slate-400">
+                <i class="fa-solid fa-box-open text-4xl mb-3 text-slate-600 block"></i>
+                <p class="text-base font-medium">Non hai ancora aggiunto nessuna serie alla tua collezione.</p>
+                <a th:href="@{/serie/nuova}" class="inline-block mt-4 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm font-medium rounded-lg transition-all">
+                    Aggiungi la tua prima serie
+                </a>
+            </div>
+        </div>
+    </main>
+
 </body>
 </html>

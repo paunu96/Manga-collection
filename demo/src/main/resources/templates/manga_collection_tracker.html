@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La mia collezione manga</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Oswald for manga-style headers, Inter for readability -->
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom Tailwind Configuration and Styles -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        manga: ['Oswald', 'sans-serif'],
+                    },
+                    colors: {
+                        manga: {
+                            dark: '#0f172a',    // slate-900
+                            card: '#1e293b',    // slate-800
+                            border: '#334155',  // slate-700
+                            accent1: '#a855f7', // purple-500
+                            accent2: '#ec4899', // pink-500
+                            success: '#10b981', // emerald-500
+                            danger: '#ef4444',  // red-500
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(285,100%,74%,0.1) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(330,100%,71%,0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* Custom Scrollbar for dark theme */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1e293b; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a855f7; }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Neon text effect for titles */
+        .neon-text {
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+        }
+    </style>
+</head>
+<body class="font-sans antialiased selection:bg-manga-accent1 selection:text-white">
+
+    <!-- Navbar -->
+    <nav class="glass-panel sticky top-0 z-50 border-b border-manga-border shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3 cursor-pointer" onclick="showView('elenco')">
+                    <div class="bg-gradient-to-br from-manga-accent1 to-manga-accent2 text-white p-2 rounded-lg shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+                        <i class="fa-solid fa-book-open"></i>
+                    </div>
+                    <span class="font-manga text-2xl font-bold tracking-wider neon-text uppercase">Manga<span class="text-manga-accent2">Vault</span></span>
+                </div>
+                <div class="flex space-x-4">
+                    <button onclick="showView('elenco')" class="text-gray-300 hover:text-white hover:bg-manga-border px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-house mr-1"></i> Home
+                    </button>
+                    <button class="text-gray-300 hover:text-white hover:bg-manga-border px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        <i class="fa-solid fa-chart-pie mr-1"></i> Statistiche
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- ================= VIEW 1: ELENCO ================= -->
+        <div id="view-elenco" class="space-y-6">
+            
+            <!-- Header & Actions -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h1 class="font-manga text-3xl font-bold uppercase tracking-wide">La mia <span class="text-manga-accent1">Collezione</span></h1>
+                
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="showView('form')" class="bg-gradient-to-r from-manga-accent1 to-manga-accent2 hover:from-purple-400 hover:to-pink-400 text-white font-bold py-2.5 px-5 rounded-xl shadow-[0_4px_15px_rgba(168,85,247,0.3)] transition-all transform hover:-translate-y-0.5 flex items-center gap-2">
+                        <i class="fa-solid fa-plus"></i> Aggiungi Serie
+                    </button>
+                    <button class="bg-manga-card hover:bg-manga-border border border-manga-border text-gray-200 font-semibold py-2.5 px-5 rounded-xl transition-all flex items-center gap-2 hover:text-manga-success">
+                        <i class="fa-solid fa-rotate text-manga-success"></i> Aggiorna da Anilist/AnimeClick
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="bg-manga-card border border-manga-border rounded-2xl shadow-xl overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                        <thead>
+                            <tr class="bg-slate-900/50 text-slate-400 text-xs uppercase tracking-wider font-semibold border-b border-manga-border">
+                                <th class="p-4">Titolo</th>
+                                <th class="p-4">Autore</th>
+                                <th class="p-4 text-center">Ultimo Poss.</th>
+                                <th class="p-4 text-center">Vol. IT / JP</th>
+                                <th class="p-4 text-center">Stato</th>
+                                <th class="p-4">Ultimo controllo</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-manga-border text-sm">
+                            
+                            <!-- Row 1: In pari -->
+                            <tr class="hover:bg-slate-700/30 transition-colors group">
+                                <td class="p-4 font-medium text-white">
+                                    <a href="#" onclick="showView('dettaglio'); return false;" class="group-hover:text-manga-accent1 transition-colors flex items-center gap-3">
+                                        <div class="w-8 h-10 bg-gray-700 rounded overflow-hidden flex-shrink-0 border border-gray-600">
+                                            <img src="https://placehold.co/32x40/334155/cbd5e1?text=OP" alt="cover" class="w-full h-full object-cover">
+                                        </div>
+                                        One Piece
+                                    </a>
+                                </td>
+                                <td class="p-4 text-gray-400">Eiichiro Oda</td>
+                                <td class="p-4 text-center">
+                                    <span class="bg-slate-900 text-white font-bold py-1 px-3 rounded-lg border border-slate-700">106</span>
+                                </td>
+                                <td class="p-4 text-center text-gray-400">
+                                    106 <span class="mx-1 text-slate-600">/</span> 108
+                                </td>
+                                <td class="p-4 text-center">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-manga-success/10 text-manga-success border border-manga-success/20">
+                                        <div class="w-1.5 h-1.5 rounded-full bg-manga-success"></div> In pari
+                                    </span>
+                                </td>
+                                <td class="p-4 text-gray-500 text-xs">Oggi, 14:30</td>
+                            </tr>
+
+                            <!-- Row 2: Arretrato -->
+                            <tr class="hover:bg-slate-700/30 transition-colors group">
+                                <td class="p-4 font-medium text-white">
+                                    <a href="#" onclick="showView('dettaglio'); return false;" class="group-hover:text-manga-accent1 transition-colors flex items-center gap-3">
+                                        <div class="w-8 h-10 bg-gray-700 rounded overflow-hidden flex-shrink-0 border border-gray-600">
+                                            <img src="https://placehold.co/32x40/334155/cbd5e1?text=JK" alt="cover" class="w-full h-full object-cover">
+                                        </div>
+                                        Jujutsu Kaisen
+                                    </a>
+                                </td>
+                                <td class="p-4 text-gray-400">Gege Akutami</td>
+                                <td class="p-4 text-center">
+                                    <span class="bg-slate-900 text-white font-bold py-1 px-3 rounded-lg border border-slate-700">20</span>
+                                </td>
+                                <td class="p-4 text-center text-gray-400">
+                                    24 <span class="mx-1 text-slate-600">/</span> 25
+                                </td>
+                                <td class="p-4 text-center">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-manga-danger/10 text-manga-danger border border-manga-danger/20">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> 4 Arretrati
+                                    </span>
+                                </td>
+                                <td class="p-4 text-gray-500 text-xs">Ieri, 09:15</td>
+                            </tr>
+
+                            <!-- Row 3: Concluso -->
+                            <tr class="hover:bg-slate-700/30 transition-colors group">
+                                <td class="p-4 font-medium text-white">
+                                    <a href="#" onclick="showView('dettaglio'); return false;" class="group-hover:text-manga-accent1 transition-colors flex items-center gap-3">
+                                        <div class="w-8 h-10 bg-gray-700 rounded overflow-hidden flex-shrink-0 border border-gray-600">
+                                            <img src="https://placehold.co/32x40/334155/cbd5e1?text=FM" alt="cover" class="w-full h-full object-cover">
+                                        </div>
+                                        Fullmetal Alchemist
+                                    </a>
+                                </td>
+                                <td class="p-4 text-gray-400">Hiromu Arakawa</td>
+                                <td class="p-4 text-center">
+                                    <span class="bg-slate-900 text-white font-bold py-1 px-3 rounded-lg border border-slate-700">27</span>
+                                </td>
+                                <td class="p-4 text-center text-gray-400">
+                                    27 <span class="mx-1 text-slate-600">/</span> 27
+                                </td>
+                                <td class="p-4 text-center">
+                                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                        <i class="fa-solid fa-check-double"></i> Completa
+                                    </span>
+                                </td>
+                                <td class="p-4 text-gray-500 text-xs">10/05/2024</td>
+                            </tr>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= VIEW 2: DETTAGLIO SERIE ================= -->
+        <div id="view-dettaglio" class="hidden space-y-6">
+            
+            <button onclick="showView('elenco')" class="text-gray-400 hover:text-white mb-4 flex items-center gap-2 transition-colors">
+                <i class="fa-solid fa-arrow-left"></i> Torna alla collezione
+            </button>
+
+            <!-- Manga Header Card -->
+            <div class="bg-manga-card border border-manga-border rounded-2xl p-6 shadow-xl relative overflow-hidden">
+                <!-- Background decorative element -->
+                <div class="absolute -right-20 -top-20 w-64 h-64 bg-manga-accent1/10 rounded-full blur-3xl pointer-events-none"></div>
+                
+                <div class="flex flex-col md:flex-row gap-6 relative z-10">
+                    <div class="w-32 h-44 bg-slate-700 rounded-xl flex-shrink-0 shadow-lg border-2 border-slate-600 overflow-hidden">
+                         <img src="https://placehold.co/128x176/334155/cbd5e1?text=Cover" alt="cover" class="w-full h-full object-cover">
+                    </div>
+                    
+                    <div class="flex-1">
+                        <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                            <div>
+                                <h1 class="font-manga text-4xl font-bold uppercase tracking-wide text-white mb-1">Jujutsu Kaisen</h1>
+                                <p class="text-manga-accent1 font-medium text-lg mb-4">Gege Akutami</p>
+                                
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                                    <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-700">
+                                        <span class="block text-gray-500 text-xs uppercase mb-1">Editore IT</span>
+                                        <span class="font-semibold text-gray-200">Planet Manga</span>
+                                    </div>
+                                    <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-700">
+                                        <span class="block text-gray-500 text-xs uppercase mb-1">Stato IT</span>
+                                        <span class="font-semibold text-gray-200">In corso (Vol. 24)</span>
+                                    </div>
+                                    <div class="bg-slate-900/50 p-3 rounded-lg border border-slate-700">
+                                        <span class="block text-gray-500 text-xs uppercase mb-1">Stato JP</span>
+                                        <span class="font-semibold text-gray-200">In corso (Vol. 25)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button class="text-manga-danger hover:text-white hover:bg-manga-danger/20 border border-manga-danger/30 px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 h-fit">
+                                <i class="fa-solid fa-trash-can"></i> Elimina Serie
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning Alert -->
+            <div class="bg-yellow-500/10 border border-yellow-500/30 text-yellow-200 p-4 rounded-xl flex items-start gap-3 shadow-lg">
+                <i class="fa-solid fa-triangle-exclamation text-yellow-500 mt-1"></i>
+                <div>
+                    <strong class="block mb-1 text-yellow-500">Volumi Mancanti</strong>
+                    Ti mancano i seguenti volumi per essere in pari con le uscite italiane: 
+                    <span class="font-bold bg-yellow-500/20 px-2 py-0.5 rounded text-yellow-400 mx-1">21</span>, 
+                    <span class="font-bold bg-yellow-500/20 px-2 py-0.5 rounded text-yellow-400 mx-1">22</span>, 
+                    <span class="font-bold bg-yellow-500/20 px-2 py-0.5 rounded text-yellow-400 mx-1">23</span>, 
+                    <span class="font-bold bg-yellow-500/20 px-2 py-0.5 rounded text-yellow-400 mx-1">24</span>.
+                </div>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-6">
+                <!-- Add Volume Form -->
+                <div class="lg:col-span-1">
+                    <div class="bg-manga-card border border-manga-border rounded-2xl p-5 shadow-xl sticky top-24">
+                        <h2 class="font-manga text-xl text-white uppercase tracking-wide mb-4 border-b border-slate-700 pb-2"><i class="fa-solid fa-plus text-manga-accent1 mr-2"></i>Aggiungi Volume</h2>
+                        
+                        <form class="space-y-4">
+                            <div class="flex gap-4">
+                                <div class="w-1/3">
+                                    <label class="block text-xs text-gray-400 uppercase mb-1">Numero</label>
+                                    <input type="number" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-manga-accent1 focus:ring-1 focus:ring-manga-accent1 transition-all" value="21" min="0">
+                                </div>
+                                <div class="w-2/3">
+                                    <label class="block text-xs text-gray-400 uppercase mb-1">Edizione</label>
+                                    <input type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-manga-accent1 focus:ring-1 focus:ring-manga-accent1 transition-all" placeholder="Normale">
+                                </div>
+                            </div>
+                            
+                            <div class="flex gap-4">
+                                <div class="w-1/2">
+                                    <label class="block text-xs text-gray-400 uppercase mb-1">Prezzo Pagato (€)</label>
+                                    <input type="number" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-manga-accent1 focus:ring-1 focus:ring-manga-accent1 transition-all" placeholder="5.20">
+                                </div>
+                                <div class="w-1/2">
+                                    <label class="block text-xs text-gray-400 uppercase mb-1">Prezzo Copertina</label>
+                                    <input type="number" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-manga-accent1 focus:ring-1 focus:ring-manga-accent1 transition-all" placeholder="5.20">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 uppercase mb-1">Data Acquisto</label>
+                                <input type="date" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-manga-accent1 focus:ring-1 focus:ring-manga-accent1 transition-all text-sm block">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-400 uppercase mb-1">Note</label>
+                                <input type="text" class="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-manga-accent1 focus:ring-1 focus:ring-manga-accent1 transition-all" placeholder="Es. Sovraccoperta rovinata...">
+                            </div>
+
+                            <button type="button" class="w-full bg-manga-accent1 hover:bg-purple-400 text-white font-bold py-2.5 px-4 rounded-lg shadow-lg shadow-manga-accent1/30 transition-all mt-2">
+                                Salva Volume
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Volumes Table -->
+                <div class="lg:col-span-2 bg-manga-card border border-manga-border rounded-2xl shadow-xl overflow-hidden flex flex-col">
+                    <div class="p-5 border-b border-manga-border bg-slate-800/50 flex justify-between items-center">
+                        <h2 class="font-manga text-xl text-white uppercase tracking-wide"><i class="fa-solid fa-layer-group text-manga-accent2 mr-2"></i>Volumi Posseduti</h2>
+                        <span class="bg-slate-900 text-gray-300 text-xs px-2 py-1 rounded border border-slate-700">Totale: 20</span>
+                    </div>
+                    
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left border-collapse whitespace-nowrap">
+                            <thead class="bg-slate-900/80 text-slate-400 text-xs uppercase font-semibold">
+                                <tr>
+                                    <th class="p-3 pl-5">Vol.</th>
+                                    <th class="p-3">Edizione</th>
+                                    <th class="p-3">Prezzo</th>
+                                    <th class="p-3">Data Acq.</th>
+                                    <th class="p-3 text-right pr-5">Azioni</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-manga-border text-sm">
+                                <!-- Volume Row -->
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="p-3 pl-5 font-bold text-white">20</td>
+                                    <td class="p-3 text-gray-300">Variant Cover</td>
+                                    <td class="p-3 text-gray-400">€ 7.50</td>
+                                    <td class="p-3 text-gray-500">12/10/2023</td>
+                                    <td class="p-3 pr-5 text-right">
+                                        <button class="text-gray-500 hover:text-manga-danger transition-colors p-1" title="Elimina">
+                                            <i class="fa-solid fa-xmark text-lg"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <!-- Volume Row -->
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="p-3 pl-5 font-bold text-white">19</td>
+                                    <td class="p-3 text-gray-300">Normale</td>
+                                    <td class="p-3 text-gray-400">€ 5.20</td>
+                                    <td class="p-3 text-gray-500">15/08/2023</td>
+                                    <td class="p-3 pr-5 text-right">
+                                        <button class="text-gray-500 hover:text-manga-danger transition-colors p-1" title="Elimina">
+                                            <i class="fa-solid fa-xmark text-lg"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <!-- Volume Row -->
+                                <tr class="hover:bg-slate-700/30 transition-colors">
+                                    <td class="p-3 pl-5 font-bold text-white">18</td>
+                                    <td class="p-3 text-gray-300">Normale</td>
+                                    <td class="p-3 text-gray-400">€ 5.20</td>
+                                    <td class="p-3 text-gray-500">10/06/2023</td>
+                                    <td class="p-3 pr-5 text-right">
+                                        <button class="text-gray-500 hover:text-manga-danger transition-colors p-1" title="Elimina">
+                                            <i class="fa-solid fa-xmark text-lg"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= VIEW 3: FORM AGGIUNTA ================= -->
+        <div id="view-form" class="hidden">
+            
+            <button onclick="showView('elenco')" class="text-gray-400 hover:text-white mb-6 flex items-center gap-2 transition-colors">
+                <i class="fa-solid fa-arrow-left"></i> Torna alla collezione
+            </button>
+
+            <div class="max-w-2xl mx-auto bg-manga-card border border-manga-border rounded-2xl shadow-xl overflow-hidden relative">
+                <!-- Header decorativo -->
+                <div class="bg-gradient-to-r from-slate-900 to-slate-800 p-6 border-b border-manga-border relative overflow-hidden">
+                    <div class="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-manga-accent1/20 to-transparent"></div>
+                    <h1 class="font-manga text-3xl font-bold uppercase tracking-wide text-white relative z-10">Aggiungi Nuova <span class="text-manga-accent1">Serie</span></h1>
+                    <p class="text-gray-400 text-sm mt-1 relative z-10">Inserisci i dettagli del manga per iniziare a tracciarlo.</p>
+                </div>
+
+                <form class="p-6 md:p-8 space-y-6">
+                    
+                    <!-- Dati Base -->
+                    <div class="space-y-4">
+                        <h3 class="text-manga-accent2 text-xs font-bold uppercase tracking-wider border-b border-slate-700 pb-1">Dati Principali</h3>
+                        
+                        <div>
+                            <label for="title" class="block text-sm font-medium text-gray-300 mb-1">Titolo <span class="text-manga-danger">*</span></label>
+                            <input type="text" id="title" required placeholder="Es. Chainsaw Man" 
+                                class="w-full bg-slate-900 border border-slate-600 rounded-xl py-2.5 px-4 text-white focus:outline-none focus:border-manga-accent1 focus:ring-2 focus:ring-manga-accent1/30 transition-all">
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="author" class="block text-sm font-medium text-gray-300 mb-1">Autore</label>
+                                <input type="text" id="author" placeholder="Es. Tatsuki Fujimoto" 
+                                    class="w-full bg-slate-900 border border-slate-600 rounded-xl py-2.5 px-4 text-white focus:outline-none focus:border-manga-accent1 focus:ring-2 focus:ring-manga-accent1/30 transition-all">
+                            </div>
+                            <div>
+                                <label for="publisherIt" class="block text-sm font-medium text-gray-300 mb-1">Editore (IT)</label>
+                                <input type="text" id="publisherIt" placeholder="Es. Planet Manga" 
+                                    class="w-full bg-slate-900 border border-slate-600 rounded-xl py-2.5 px-4 text-white focus:outline-none focus:border-manga-accent1 focus:ring-2 focus:ring-manga-accent1/30 transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stato Uscite -->
+                    <div class="space-y-4 pt-2">
+                        <h3 class="text-manga-accent2 text-xs font-bold uppercase tracking-wider border-b border-slate-700 pb-1">Stato Pubblicazione</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-900/50 p-4 rounded-xl border border-slate-700/50">
+                            <!-- Italia -->
+                            <div class="space-y-3">
+                                <div>
+                                    <label for="statusIt" class="block text-xs text-gray-400 mb-1">Stato in Italia</label>
+                                    <select id="statusIt" class="w-full bg-slate-800 border border-slate-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-manga-accent1">
+                                        <option>In corso</option>
+                                        <option>Concluso</option>
+                                        <option>Sospeso</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="latestVolumeIt" class="block text-xs text-gray-400 mb-1">Ultimo volume uscito (IT)</label>
+                                    <input type="number" id="latestVolumeIt" min="0" placeholder="0" 
+                                        class="w-full bg-slate-800 border border-slate-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-manga-accent1">
+                                </div>
+                            </div>
+                            
+                            <!-- Giappone -->
+                            <div class="space-y-3">
+                                <div>
+                                    <label for="statusJp" class="block text-xs text-gray-400 mb-1">Stato in Giappone</label>
+                                    <select id="statusJp" class="w-full bg-slate-800 border border-slate-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-manga-accent1">
+                                        <option>In corso</option>
+                                        <option>Concluso</option>
+                                        <option>Sospeso</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="latestVolumeJp" class="block text-xs text-gray-400 mb-1">Ultimo volume uscito (JP)</label>
+                                    <input type="number" id="latestVolumeJp" min="0" placeholder="0" 
+                                        class="w-full bg-slate-800 border border-slate-600 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-manga-accent1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Integrazioni -->
+                    <div class="space-y-4 pt-2">
+                        <h3 class="text-manga-accent2 text-xs font-bold uppercase tracking-wider border-b border-slate-700 pb-1">Integrazioni (Scraping)</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="animeclickUrl" class="block text-sm font-medium text-gray-300 mb-1 flex items-center gap-2">
+                                    <i class="fa-solid fa-link text-gray-500"></i> URL AnimeClick
+                                </label>
+                                <input type="url" id="animeclickUrl" placeholder="https://www.animeclick.it/manga/..." 
+                                    class="w-full bg-slate-900 border border-slate-600 rounded-xl py-2.5 px-4 text-white focus:outline-none focus:border-manga-accent1 focus:ring-2 focus:ring-manga-accent1/30 transition-all">
+                            </div>
+                            <div>
+                                <label for="anilistId" class="block text-sm font-medium text-gray-300 mb-1 flex items-center gap-2">
+                                    <i class="fa-solid fa-hashtag text-gray-500"></i> ID Anilist
+                                </label>
+                                <input type="number" id="anilistId" placeholder="Es. 113138" 
+                                    class="w-full bg-slate-900 border border-slate-600 rounded-xl py-2.5 px-4 text-white focus:outline-none focus:border-manga-accent1 focus:ring-2 focus:ring-manga-accent1/30 transition-all">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-700 flex justify-end gap-3">
+                        <button type="button" onclick="showView('elenco')" class="px-6 py-2.5 rounded-xl text-gray-300 hover:text-white hover:bg-slate-700 transition-colors font-medium">
+                            Annulla
+                        </button>
+                        <button type="button" class="bg-gradient-to-r from-manga-accent1 to-manga-accent2 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-2.5 px-8 rounded-xl shadow-[0_4px_15px_rgba(168,85,247,0.3)] transition-all transform hover:-translate-y-0.5">
+                            Salva Serie
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // Simple logic to switch between the 3 views for demonstration purposes
+        function showView(viewId) {
+            // Hide all views
+            document.getElementById('view-elenco').classList.add('hidden');
+            document.getElementById('view-dettaglio').classList.add('hidden');
+            document.getElementById('view-form').classList.add('hidden');
+            
+            // Show requested view
+            document.getElementById('view-' + viewId).classList.remove('hidden');
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
