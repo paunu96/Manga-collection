@@ -5,12 +5,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "user_volume",
-        uniqueConstraints = @UniqueConstraint(
-                name = "unique_series_volume_edizione",
-                columnNames = {"series_id", "volume_number", "edizione"}
-        ))
+@Table(name = "user_volume")
 public class UserVolume {
+
+    public enum EditionType { REGULAR, VARIANT, SPECIAL, ARTBOOK, SPINOFF }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,7 +18,8 @@ public class UserVolume {
     @JoinColumn(name = "series_id", nullable = false)
     private MangaSeries series;
 
-    @Column(name = "volume_number", nullable = false)
+    /** Nullable: artbook e altri volumi senza numero. Lo 0 è un numero valido. */
+    @Column(name = "volume_number")
     private Integer volumeNumber;
 
     @Column(name = "price_paid", precision = 5, scale = 2)
@@ -35,9 +34,18 @@ public class UserVolume {
     @Column(columnDefinition = "TEXT")
     private String notes;
 
-    /** Distingue varianti dello stesso volume (es. "Normale", "Variant cover"). */
+    /** Etichetta libera, es. "Normale", "Variant cover Lucca 2025". */
     @Column(length = 100)
     private String edizione = "Normale";
+
+    /** Tipo di edizione usato dalla logica (arretrato, posseduti). */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "edition_type", nullable = false, length = 30)
+    private EditionType editionType = EditionType.REGULAR;
+
+    /** Titolo per artbook, spin-off e volumi senza numero. */
+    @Column(length = 255)
+    private String title;
 
     public UserVolume() {
     }
@@ -106,5 +114,21 @@ public class UserVolume {
 
     public void setEdizione(String edizione) {
         this.edizione = edizione;
+    }
+
+    public EditionType getEditionType() {
+        return editionType;
+    }
+
+    public void setEditionType(EditionType editionType) {
+        this.editionType = editionType;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 }
