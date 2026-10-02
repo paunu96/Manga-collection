@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="it" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Accedi - Collezione manga</title>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #f4f4f6;
+               display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        form { background: #fff; padding: 2rem; border-radius: 10px; width: 300px;
+               box-shadow: 0 2px 12px rgba(0,0,0,.1); }
+        h1 { font-size: 1.3rem; margin-top: 0; }
+        label { display: block; margin-top: 1rem; font-size: .9rem; }
+        input { width: 100%; padding: .5rem; margin-top: .25rem; box-sizing: border-box; }
+        button { width: 100%; margin-top: 1.5rem; padding: .6rem; border: 0;
+                 border-radius: 6px; background: #3b5bdb; color: #fff; cursor: pointer; }
+        .msg { margin-top: 1rem; padding: .5rem; border-radius: 6px; font-size: .85rem; }
+        .errore { background: #ffe3e3; color: #c92a2a; }
+        .ok { background: #d3f9d8; color: #2b8a3e; }
+    </style>
+</head>
+<body>
+    <form th:action="@{/login}" method="post">
+        <h1>Collezione manga</h1>
+
+        <div th:if="${param.error}" class="msg errore">Credenziali non valide.</div>
+        <div th:if="${param.logout}" class="msg ok">Disconnessione effettuata.</div>
+
+        <label for="username">Utente</label>
+        <input type="text" id="username" name="username" autofocus required>
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required>
+
+        <button type="submit">Accedi</button>
+    </form>
+</body>
+</html>
