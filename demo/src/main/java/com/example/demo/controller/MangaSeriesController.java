@@ -8,6 +8,7 @@ import com.example.demo.service.UserVolumeService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -85,14 +86,15 @@ public class MangaSeriesController {
     }
 
     /**
-     * Dato l'elenco dei volumi posseduti, calcola i numeri "buchi" fino al
-     * più alto tra: l'ultimo volume posseduto e l'ultimo uscito in Italia.
-     * Così segnala sia i buchi interni (es. possiedi 1,2,4 → manca 3) sia i
-     * volumi già usciti in Italia che non hai ancora comprato.
+     * Calcola i numeri "buchi" tra i volumi REGOLARI, fino al più alto tra
+     * l'ultimo posseduto e l'ultimo uscito in Italia. Variant, artbook e
+     * spin-off (e qualunque volume senza numero) vengono ignorati.
      */
     private List<Integer> calcolaVolumiMancanti(List<UserVolume> volumi, Integer latestVolumeIt) {
         Set<Integer> posseduti = volumi.stream()
+                .filter(v -> v.getEditionType() == UserVolume.EditionType.REGULAR)
                 .map(UserVolume::getVolumeNumber)
+                .filter(n -> n != null)
                 .collect(Collectors.toSet());
         int massimoPosseduto = posseduti.stream().mapToInt(Integer::intValue).max().orElse(0);
         int uscitiIt = latestVolumeIt != null ? latestVolumeIt : 0;
@@ -118,8 +120,13 @@ public class MangaSeriesController {
 
     /** Registra un volume posseduto per una serie. */
     @PostMapping("/serie/{seriesId}/volumi")
-    public String aggiungiVolume(@PathVariable Long seriesId, @ModelAttribute UserVolume nuovoVolume) {
-        userVolumeService.addVolume(seriesId, nuovoVolume);
+    public String aggiungiVolume(@PathVariable Long seriesId, @ModelAttribute UserVolume nuovoVolume,
+                                 RedirectAttributes redirectAttributes) {
+        try {
+            userVolumeService.addVolume(seriesId, nuovoVolume);
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errore", e.getMessage());
+        }
         return "redirect:/serie/" + seriesId;
     }
 
