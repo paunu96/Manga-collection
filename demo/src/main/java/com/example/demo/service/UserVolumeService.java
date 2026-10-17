@@ -6,7 +6,10 @@ import com.example.demo.model.UserVolume.EditionType;
 import com.example.demo.repository.UserVolumeRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Set;
 
 @Service
 public class UserVolumeService {
@@ -90,4 +93,29 @@ public class UserVolumeService {
     public void delete(Long id) {
         repository.deleteById(id);
     }
+
+    public List<Integer> calcolaVolumiMancanti(List<UserVolume> volumi, Integer latestVolumeIt) {
+    Set<Integer> posseduti = volumi.stream()
+            .filter(v -> v.getEditionType() == EditionType.REGULAR)
+            .map(UserVolume::getVolumeNumber)
+            .filter(n -> n != null)
+            .collect(Collectors.toSet());
+    int massimoPosseduto = posseduti.stream().mapToInt(Integer::intValue).max().orElse(0);
+    int uscitiIt = latestVolumeIt != null ? latestVolumeIt : 0;
+    int massimo = Math.max(massimoPosseduto, uscitiIt);
+
+    List<Integer> mancanti = new ArrayList<>();
+    for (int n = 1; n <= massimo; n++) {
+        if (!posseduti.contains(n)) {
+            mancanti.add(n);
+        }
+    }
+    return mancanti;
+}
+
+/** Variante comoda quando hai solo l'id della serie (usata dall'elenco). */
+public List<Integer> calcolaVolumiMancanti(Long seriesId, Integer latestVolumeIt) {
+    return calcolaVolumiMancanti(findBySeries(seriesId), latestVolumeIt);
+}
+    
 }

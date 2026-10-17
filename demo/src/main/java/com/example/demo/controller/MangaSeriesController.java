@@ -10,12 +10,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
+
 
 @Controller
 public class MangaSeriesController {
@@ -46,12 +44,9 @@ public class MangaSeriesController {
         Map<Long, Integer> arretratoPerSerie = new HashMap<>();
 
         for (MangaSeries s : serie) {
-            Integer ultimoPosseduto = userVolumeService.findUltimoVolumeNumero(s.getId());
-            ultimoPossedutoPerSerie.put(s.getId(), ultimoPosseduto);
-
-            int posseduto = ultimoPosseduto != null ? ultimoPosseduto : 0;
-            int uscitiIt = s.getLatestVolumeIt() != null ? s.getLatestVolumeIt() : 0;
-            arretratoPerSerie.put(s.getId(), Math.max(0, uscitiIt - posseduto));
+            ultimoPossedutoPerSerie.put(s.getId(), userVolumeService.findUltimoVolumeNumero(s.getId()));
+            arretratoPerSerie.put(s.getId(),
+                    userVolumeService.calcolaVolumiMancanti(s.getId(), s.getLatestVolumeIt()).size());
         }
 
         model.addAttribute("serie", serie);
@@ -80,36 +75,10 @@ public class MangaSeriesController {
         MangaSeries mangaSeries = mangaSeriesService.findById(id);
         model.addAttribute("mangaSeries", mangaSeries);
         model.addAttribute("volumi", volumi);
-        model.addAttribute("volumiMancanti", calcolaVolumiMancanti(volumi, mangaSeries.getLatestVolumeIt()));
+        model.addAttribute("volumiMancanti",
+                userVolumeService.calcolaVolumiMancanti(volumi, mangaSeries.getLatestVolumeIt()));
         model.addAttribute("nuovoVolume", new UserVolume());
         return "serie-dettaglio";
-    }
-
-    /**
-     * Calcola i numeri "buchi" tra i volumi REGOLARI, fino al più alto tra
-     * l'ultimo posseduto e l'ultimo uscito in Italia. Variant, artbook e
-     * spin-off (e qualunque volume senza numero) vengono ignorati.
-     */
-    private List<Integer> calcolaVolumiMancanti(List<UserVolume> volumi, Integer latestVolumeIt) {
-        Set<Integer> posseduti = volumi.stream()
-                .filter(v -> v.getEditionType() == UserVolume.EditionType.REGULAR)
-                .map(UserVolume::getVolumeNumber)
-                .filter(n -> n != null)
-                .collect(Collectors.toSet());
-        int massimoPosseduto = posseduti.stream().mapToInt(Integer::intValue).max().orElse(0);
-        int uscitiIt = latestVolumeIt != null ? latestVolumeIt : 0;
-        int massimo = Math.max(massimoPosseduto, uscitiIt);
-
-        if (massimo == 0) {
-            return List.of();
-        }
-        List<Integer> mancanti = new ArrayList<>();
-        for (int n = 1; n <= massimo; n++) {
-            if (!posseduti.contains(n)) {
-                mancanti.add(n);
-            }
-        }
-        return mancanti;
     }
 
     @PostMapping("/serie/{id}/elimina")
@@ -135,4 +104,6 @@ public class MangaSeriesController {
         userVolumeService.delete(volumeId);
         return "redirect:/serie/" + seriesId;
     }
+
+    
 }
