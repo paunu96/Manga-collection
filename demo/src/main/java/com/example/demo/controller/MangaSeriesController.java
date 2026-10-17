@@ -68,6 +68,26 @@ public class MangaSeriesController {
         return "redirect:/";
     }
 
+        /** Form di modifica: riusa serie-form.html precompilato. */
+    @GetMapping("/serie/{id}/modifica")
+    public String formModificaSerie(@PathVariable Long id, Model model) {
+        model.addAttribute("mangaSeries", mangaSeriesService.findById(id));
+        return "serie-form";
+    }
+
+    @PostMapping("/serie/{id}/modifica")
+    public String modificaSerie(@PathVariable Long id, @ModelAttribute MangaSeries mangaSeries, Model model) {
+        try {
+            mangaSeriesService.updateFromForm(id, mangaSeries);
+        } catch (IllegalArgumentException e) {
+            // Rimostra il form con i dati inseriti e il messaggio di errore
+            mangaSeries.setId(id);
+            model.addAttribute("errore", e.getMessage());
+            return "serie-form";
+        }
+        return "redirect:/serie/" + id;
+    }
+
     /** Dettaglio di una serie con i volumi posseduti. */
     @GetMapping("/serie/{id}")
     public String dettaglioSerie(@PathVariable Long id, Model model) {

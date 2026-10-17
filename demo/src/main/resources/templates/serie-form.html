@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nuova serie</title>
+    <title th:text="${inModifica} ? 'Modifica serie' : 'Nuova serie'">Nuova serie</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome per le icone -->
@@ -15,14 +15,16 @@
         .font-display { font-family: 'Oswald', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col antialiased"
+      th:with="inModifica=${mangaSeries.id != null}">
 
     <!-- Header Navigation -->
     <header class="bg-slate-800/80 border-b border-slate-700/60 sticky top-0 z-50 backdrop-blur-md">
         <div class="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
-            <a th:href="@{/}" class="text-slate-300 hover:text-white transition-colors flex items-center space-x-2 text-sm font-medium">
+            <a th:href="${inModifica} ? @{/serie/{id}(id=${mangaSeries.id})} : @{/}"
+               class="text-slate-300 hover:text-white transition-colors flex items-center space-x-2 text-sm font-medium">
                 <i class="fa-solid fa-arrow-left text-xs"></i>
-                <span>Torna alla collezione</span>
+                <span th:text="${inModifica} ? 'Torna alla serie' : 'Torna alla collezione'">Torna alla collezione</span>
             </a>
             <div class="font-display text-xl font-bold tracking-wider bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-400">
                 MANGADEX
@@ -34,11 +36,22 @@
         
         <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-6 md:p-8 shadow-xl backdrop-blur-sm">
             <div class="mb-6">
-                <h1 class="font-display text-3xl font-bold tracking-wide text-white">Aggiungi una nuova serie</h1>
-                <p class="text-slate-400 text-sm mt-1">Inserisci le informazioni relative alla nuova opera per includerla nella tua collezione.</p>
+                <h1 class="font-display text-3xl font-bold tracking-wide text-white"
+                    th:text="${inModifica} ? 'Modifica serie' : 'Aggiungi una nuova serie'">Aggiungi una nuova serie</h1>
+                <p class="text-slate-400 text-sm mt-1"
+                   th:text="${inModifica} ? 'Aggiorna le informazioni di questa serie. I volumi che possiedi non vengono toccati.' : 'Inserisci le informazioni relative alla nuova opera per includerla nella tua collezione.'">
+                    Inserisci le informazioni relative alla nuova opera per includerla nella tua collezione.</p>
             </div>
 
-            <form th:action="@{/serie}" th:object="${mangaSeries}" method="post" class="space-y-5">
+            <!-- Messaggio di errore (es. titolo vuoto) -->
+            <div th:if="${errore}"
+                 class="mb-5 bg-rose-500/10 border border-rose-500/30 rounded-xl p-3 text-rose-300 text-sm flex items-start space-x-3">
+                <i class="fa-solid fa-circle-exclamation text-rose-400 text-base mt-0.5"></i>
+                <span th:text="${errore}">Errore</span>
+            </div>
+
+            <form th:action="${inModifica} ? @{/serie/{id}/modifica(id=${mangaSeries.id})} : @{/serie}"
+                  th:object="${mangaSeries}" method="post" class="space-y-5">
                 
                 <div>
                     <label for="title" class="block text-sm font-medium text-slate-200 mb-1.5">Titolo *</label>
@@ -100,14 +113,23 @@
                         <input type="number" id="anilistId" th:field="*{anilistId}" placeholder="es. 30013"
                                class="w-full bg-slate-900/80 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500">
                     </div>
+
+                    <div class="md:col-span-2">
+                        <label for="titoloRicercaAnimeclick" class="block text-sm font-medium text-slate-200 mb-1.5">Titolo di ricerca AnimeClick</label>
+                        <input type="text" id="titoloRicercaAnimeclick" th:field="*{titoloRicercaAnimeclick}" placeholder="es. One Piece New Edition"
+                               class="w-full bg-slate-900/80 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500">
+                        <p class="text-xs text-slate-500 mt-1.5">Solo se devi tracciare un'edizione diversa da quella base (es. New Edition).</p>
+                    </div>
                 </div>
 
                 <div class="pt-4 flex items-center justify-end space-x-3">
-                    <a th:href="@{/}" class="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-lg transition-colors">
+                    <a th:href="${inModifica} ? @{/serie/{id}(id=${mangaSeries.id})} : @{/}"
+                       class="px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-lg transition-colors">
                         Annulla
                     </a>
                     <button type="submit" 
-                            class="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium text-sm rounded-lg shadow-lg hover:shadow-purple-500/25 transition-all">
+                            class="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium text-sm rounded-lg shadow-lg hover:shadow-purple-500/25 transition-all"
+                            th:text="${inModifica} ? 'Salva modifiche' : 'Salva Serie'">
                         Salva Serie
                     </button>
                 </div>
